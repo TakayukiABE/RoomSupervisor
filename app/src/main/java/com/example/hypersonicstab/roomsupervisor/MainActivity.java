@@ -33,12 +33,14 @@ public class MainActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
+        final SharedPreferences data = getSharedPreferences("WakeUpTime", Context.MODE_PRIVATE);
+        int wakeUpHour = data.getInt("hour", hour);
+        int wakeUpMinute = data.getInt("minute", minute);
         final TimePickerDialog dialog = new TimePickerDialog(
                 this,
                 new TimePickerDialog.OnTimeSetListener(){
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        SharedPreferences data = getSharedPreferences("WakeUpTime", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = data.edit();
                         editor.putInt("hour", hourOfDay);
                         editor.apply();
@@ -48,18 +50,20 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("test",String.format("%02d:%02d", hourOfDay,minute));
                     }
                 },
-                hour,minute,true);
+                wakeUpHour,wakeUpMinute,true);
 
         Button wakeOnLanButton = (Button) findViewById(R.id.wake_on_lan_button);
         Button lightOnButton = (Button) findViewById(R.id.light_on_button);
         Button lightOffButton = (Button) findViewById(R.id.light_off_button);
         Button setTimeButton = (Button) findViewById(R.id.set_time_button);
         Button setAlarmButton = (Button) findViewById(R.id.alarm_button);
+        Button removeButton = (Button) findViewById(R.id.remove_button);
 
         wakeOnLanButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.wake_on_lan)));
         lightOnButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.light_on)));
         lightOffButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.light_off)));
         setAlarmButton.setOnClickListener(new AtListener(getString(R.string.base_url)+getString(R.string.alarm)));
+        removeButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.remove_all)));
 
         setTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,8 +120,6 @@ public class MainActivity extends AppCompatActivity {
         int wakeUpMinute = data.getInt("minute", 00);
         TextView wakeUpTime = (TextView) findViewById(R.id.wake_up_time_text);
         wakeUpTime.setText(getString(R.string.wake_up_time, String.format("%2d:%2d", wakeUpHour, wakeUpMinute)));
-        Button setAlarmButton = (Button) findViewById(R.id.alarm_button);
-        setAlarmButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.alarm)+String.format("%2d%2d", wakeUpHour, wakeUpMinute)));
     }
 
     static String InputStreamToString(InputStream is) throws IOException {
