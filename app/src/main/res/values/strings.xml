@@ -7,4 +7,6 @@
     <string name="button_name5">ボタン 5</string>
     <string name="wake_up_time">目覚まし設定時刻：%1$s</string>
     <string name="set_time_name">時刻を変更</string>
+    <string name="alarm_name">目覚ましをセット</string>
+    <string name="alarm">wake_up_at_</string>
 </resources>
