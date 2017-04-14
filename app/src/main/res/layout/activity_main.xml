@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.hypersonicstab.roomsupervisor.MainActivity"
+    android:weightSum="1">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:textAllCaps="false"
+            android:id="@+id/wake_on_lan_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/wake_on_lan_name" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/light_on_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/light_on_name" />
+
+        <Button
+            android:id="@+id/light_off_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/light_off_name" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/wake_up_time_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/wake_up_time"
+        android:textAlignment="center"/>
+
+    <Button
+        android:id="@+id/set_time_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/set_time_name" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Button" />
+
+</LinearLayout>
