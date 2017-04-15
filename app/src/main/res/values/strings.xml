@@ -8,7 +8,5 @@
     <string name="wake_up_time">目覚まし設定時刻：%1$s</string>
     <string name="set_time_name">時刻を変更</string>
     <string name="alarm_name">目覚ましをセット</string>
-    <string name="alarm">wake_up_at_</string>
     <string name="remove_name">目覚ましの設定を削除</string>
-    <string name="remove_all">remove_all_atq</string>
 </resources>

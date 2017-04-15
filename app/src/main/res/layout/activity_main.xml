@@ -65,6 +65,8 @@
         android:id="@+id/remove_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/colorWhite"
+        android:background="@color/colorRed"
         android:text="@string/remove_name" />
 
 </LinearLayout>

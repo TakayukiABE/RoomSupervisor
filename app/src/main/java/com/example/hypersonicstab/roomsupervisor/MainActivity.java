@@ -1,8 +1,15 @@
 package com.example.hypersonicstab.roomsupervisor;
 
 import android.app.TimePickerDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,7 +28,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ConnectionReceiver.Observer {
+
+    private boolean inHome = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +38,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         updateWakeUpTimeText();
+        ConnectionReceiver receiver = new ConnectionReceiver(this);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        registerReceiver(receiver, intentFilter);
+
+        updateNetworkState();
 
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
@@ -59,11 +74,11 @@ public class MainActivity extends AppCompatActivity {
         Button setAlarmButton = (Button) findViewById(R.id.alarm_button);
         Button removeButton = (Button) findViewById(R.id.remove_button);
 
-        wakeOnLanButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.wake_on_lan)));
-        lightOnButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.light_on)));
-        lightOffButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.light_off)));
-        setAlarmButton.setOnClickListener(new AtListener(getString(R.string.base_url)+getString(R.string.alarm)));
-        removeButton.setOnClickListener(new MyListener(getString(R.string.base_url)+getString(R.string.remove_all)));
+        wakeOnLanButton.setOnClickListener(new MyListener(getString(R.string.wake_on_lan)));
+        lightOnButton.setOnClickListener(new MyListener(getString(R.string.light_on)));
+        lightOffButton.setOnClickListener(new MyListener(getString(R.string.light_off)));
+        setAlarmButton.setOnClickListener(new AtListener(getString(R.string.alarm)));
+        removeButton.setOnClickListener(new MyListener(getString(R.string.remove_all)));
 
         setTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,6 +129,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void updateNetworkState() {
+        WifiManager wifiManager = (WifiManager) getSystemService (Context.WIFI_SERVICE);
+        WifiInfo info = wifiManager.getConnectionInfo ();
+        String ssid = info.getSSID();
+        inHome = false;
+        if (ssid != null) {
+            if (ssid.equals('"' + (getString(R.string.home_ssid)) + '"')) {
+                Log.v("equal", "equal!");
+                inHome = true;
+            }
+        }
+    }
+
     public void updateWakeUpTimeText() {
         SharedPreferences data = getSharedPreferences("WakeUpTime", Context.MODE_PRIVATE);
         int wakeUpHour = data.getInt("hour", 00);
@@ -133,7 +161,18 @@ public class MainActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    public static class MyListener implements View.OnClickListener {
+    @Override
+    public void onConnect() {
+        updateNetworkState();
+        Log.v("connect", "C");
+    }
+
+    @Override
+    public void onDisconnect() {
+        Log.v("disconnect", "DC");
+    }
+
+    public class MyListener implements View.OnClickListener {
         private String url;
 
         public MyListener(String url) {
@@ -146,7 +185,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     try {
-                        URL url = new URL(MyListener.this.url);
+                        String urlString;
+                        if (inHome) {
+                            urlString = getString(R.string.base_url_in_home);
+                        } else {
+                            urlString = getString(R.string.base_url);
+                        }
+                        URL url = new URL(urlString+MyListener.this.url);
                         HttpURLConnection con = (HttpURLConnection) url.openConnection();
                         String str = InputStreamToString(con.getInputStream());
                         Log.d("HTTP", str);
@@ -173,7 +218,13 @@ public class MainActivity extends AppCompatActivity {
                         Log.v("wakeUpHour", String.valueOf(wakeUpHour));
                         final int wakeUpMinute = data.getInt("minute", 00);
                         Log.v("wakeUpMinute", String.valueOf(wakeUpMinute));
-                        URL url = new URL(AtListener.super.url+String.format("%02d", wakeUpHour)+String.format("%02d", wakeUpMinute));
+                        String urlString;
+                        if (inHome) {
+                            urlString = getString(R.string.base_url_in_home);
+                        } else {
+                            urlString = getString(R.string.base_url);
+                        }
+                        URL url = new URL(urlString+getString(R.string.alarm)+String.format("%02d", wakeUpHour)+String.format("%02d", wakeUpMinute));
                         Log.v("url", String.valueOf(url));
                         HttpURLConnection con = (HttpURLConnection) url.openConnection();
                         String str = InputStreamToString(con.getInputStream());
@@ -190,5 +241,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }).start();
         }
+    }
+}
+
+class ConnectionReceiver extends BroadcastReceiver {
+    private Observer mObserver;
+
+    public ConnectionReceiver(Observer observer) {
+        mObserver = observer;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = manager.getActiveNetworkInfo();
+        if (info == null) {
+            mObserver.onDisconnect();
+        }else {
+            mObserver.onConnect();
+        }
+    }
+
+    //----- コールバックを定義 -----
+    interface Observer {
+        void onConnect();
+        void onDisconnect();
     }
 }
