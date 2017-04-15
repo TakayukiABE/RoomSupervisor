@@ -10,6 +10,16 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        resValue("string", "user_name", getProperty("userName"))
+        resValue("string", "pass_word", getProperty("passWord"))
+        resValue("string", "base_url_in_home", getProperty("baseUrlInHome"))
+        resValue("string", "base_url", getProperty("baseUrl"))
+        resValue("string", "light_on", getProperty("lightOn"))
+        resValue("string", "light_off", getProperty("lightOff"))
+        resValue("string", "wake_on_lan", getProperty("wakeOnLan"))
+        resValue("string", "alarm", getProperty("alarm"))
+        resValue("string", "remove_all", getProperty("removeAll"))
+        resValue("string", "home_ssid", getProperty("homeSSID"))
     }
     buildTypes {
         release {

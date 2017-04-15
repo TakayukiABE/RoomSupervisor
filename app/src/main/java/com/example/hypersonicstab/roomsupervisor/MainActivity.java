@@ -24,20 +24,39 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Calendar;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends AppCompatActivity implements ConnectionReceiver.Observer {
 
     private boolean inHome = false;
+    SSLContext sslcontext = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Authenticator.setDefault(new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(getString(R.string.user_name), getString(R.string.pass_word).toCharArray());
+            }
+        });
+
         updateWakeUpTimeText();
+
         ConnectionReceiver receiver = new ConnectionReceiver(this);
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
@@ -88,6 +107,43 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         });
 
 
+        //////////////////////////////////////////////
+//オレオレ証明書によるSSLサーバー接続でもエラーをスルーできるようにする
+
+        try {
+            //証明書情報 全て空を返す
+            //証明書情報　全て空を返す
+            TrustManager[] tm = {
+                    new X509TrustManager() {
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }//function
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] chain,
+                                                       String authType) throws CertificateException {
+                        }//function
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] chain,
+                                                       String authType) throws CertificateException {
+                        }//function
+                    }//class
+            };
+            sslcontext = SSLContext.getInstance("SSL");
+            sslcontext.init(null, tm, null);
+            //ホスト名の検証ルール　何が来てもtrueを返す
+            HttpsURLConnection.setDefaultHostnameVerifier(
+                    new HostnameVerifier(){
+                        @Override
+                        public boolean verify(String hostname,
+                                              SSLSession session) {
+                            return true;
+                        }//function
+                    }//class
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }//try
+
         /*
         lightOnButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,34 +165,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         });
         */
 
-        lightOffButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            URL url = new URL("http://192.168.11.10:4567/light_off");
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            String str = InputStreamToString(con.getInputStream());
-                            Log.d("HTTP", str);
-                        } catch (Exception ex) {
-                            System.out.println(ex);
-                        }
-                    }
-                }).start();
-            }
-        });
     }
 
     public void updateNetworkState() {
-        WifiManager wifiManager = (WifiManager) getSystemService (Context.WIFI_SERVICE);
-        WifiInfo info = wifiManager.getConnectionInfo ();
-        String ssid = info.getSSID();
+        String ssid = null;
         inHome = false;
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        if (mWifi.isConnected()) {
+            WifiManager wifiManager = (WifiManager) getSystemService (Context.WIFI_SERVICE);
+            WifiInfo info = wifiManager.getConnectionInfo ();
+            ssid = info.getSSID();
+        }
         if (ssid != null) {
             if (ssid.equals('"' + (getString(R.string.home_ssid)) + '"')) {
                 Log.v("equal", "equal!");
+                Log.v("SSID!", ssid);
                 inHome = true;
             }
         }
@@ -192,7 +237,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                             urlString = getString(R.string.base_url);
                         }
                         URL url = new URL(urlString+MyListener.this.url);
-                        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                        con.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String hostname, SSLSession session) {
+                                return true;
+                            }
+                        });
+
+
+                        con.setSSLSocketFactory(MainActivity.this.sslcontext.getSocketFactory());
+
                         String str = InputStreamToString(con.getInputStream());
                         Log.d("HTTP", str);
                     } catch (Exception ex) {
@@ -226,7 +282,20 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                         }
                         URL url = new URL(urlString+getString(R.string.alarm)+String.format("%02d", wakeUpHour)+String.format("%02d", wakeUpMinute));
                         Log.v("url", String.valueOf(url));
-                        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                        con.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String hostname, SSLSession session) {
+                                return true;
+                            }
+                        });
+
+
+                        con.setSSLSocketFactory(MainActivity.this.sslcontext.getSocketFactory());
+
+
+
+
                         String str = InputStreamToString(con.getInputStream());
                         Log.d("HTTP", str);
                         mainHandler.post(new Runnable() {
