@@ -106,31 +106,24 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
             }
         });
 
-
-        //////////////////////////////////////////////
-//オレオレ証明書によるSSLサーバー接続でもエラーをスルーできるようにする
-
         try {
-            //証明書情報 全て空を返す
-            //証明書情報　全て空を返す
             TrustManager[] tm = {
                     new X509TrustManager() {
                         public X509Certificate[] getAcceptedIssuers() {
                             return null;
-                        }//function
+                        }
                         @Override
                         public void checkClientTrusted(X509Certificate[] chain,
                                                        String authType) throws CertificateException {
-                        }//function
+                        }
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain,
                                                        String authType) throws CertificateException {
-                        }//function
-                    }//class
+                        }
+                    }
             };
             sslcontext = SSLContext.getInstance("SSL");
             sslcontext.init(null, tm, null);
-            //ホスト名の検証ルール　何が来てもtrueを返す
             HttpsURLConnection.setDefaultHostnameVerifier(
                     new HostnameVerifier(){
                         @Override
@@ -138,33 +131,17 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                                               SSLSession session) {
                             return true;
                         }//function
-                    }//class
+                    }
             );
         } catch (Exception e) {
             e.printStackTrace();
-        }//try
+        }
+    }
 
-        /*
-        lightOnButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            URL url = new URL("http://192.168.11.10:4567/light_on");
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            String str = InputStreamToString(con.getInputStream());
-                            Log.d("HTTP", str);
-                        } catch (Exception ex) {
-                            System.out.println(ex);
-                        }
-                    }
-                }).start();
-            }
-        });
-        */
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateNetworkState();
     }
 
     public void updateNetworkState() {
@@ -180,8 +157,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         }
         if (ssid != null) {
             if (ssid.equals('"' + (getString(R.string.home_ssid)) + '"')) {
-                Log.v("equal", "equal!");
-                Log.v("SSID!", ssid);
                 inHome = true;
             }
         }
@@ -209,12 +184,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
     @Override
     public void onConnect() {
         updateNetworkState();
-        Log.v("connect", "C");
-    }
-
-    @Override
-    public void onDisconnect() {
-        Log.v("disconnect", "DC");
     }
 
     public class MyListener implements View.OnClickListener {
@@ -300,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                         Log.d("HTTP", str);
                         mainHandler.post(new Runnable() {
                             public void run() {
-                                Log.v("hoge", "thread name:" + Thread.currentThread().getName());
                                 Toast.makeText(MainActivity.this, wakeUpHour+"時"+wakeUpMinute+"分に目覚ましを設定しました", Toast.LENGTH_LONG).show();
                             }
                         });
@@ -324,16 +292,12 @@ class ConnectionReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = manager.getActiveNetworkInfo();
-        if (info == null) {
-            mObserver.onDisconnect();
-        }else {
+        if (info != null) {
             mObserver.onConnect();
         }
     }
 
-    //----- コールバックを定義 -----
     interface Observer {
         void onConnect();
-        void onDisconnect();
     }
 }
