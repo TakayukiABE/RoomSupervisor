@@ -1,2 +1,2 @@
 # RoomSupervisor
-部屋の電気とか管理するアプリ（自分用）
+Raspberry Piに接続された赤外線LEDを制御することにとって部屋の照明等を操作するためのAndroidアプリ（自分用）
